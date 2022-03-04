@@ -48,6 +48,7 @@ dev_dependencies:
   intl:
   flutter_slidable: ^0.6.0
   loading_animation_widget:
+  shared_preferences: ^2.0.13
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

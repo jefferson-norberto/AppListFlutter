@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/models/todo.dart';
+import 'package:todo_list/repositories/todo_repository.dart';
 import 'package:todo_list/widgets/todo_list_item.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -12,9 +13,22 @@ class ToDoListPage extends StatefulWidget {
 
 class _ToDoListPageState extends State<ToDoListPage> {
   final TextEditingController todoController = TextEditingController();
+  final TodoRepository repository = TodoRepository();
   List<Todo> todos = [];
   Todo? todoDeleted;
   int? todoDeletedPosition;
+  String? erroText;
+
+  @override
+  void initState() {
+    super.initState();
+
+    repository.getTodoList().then((value) {
+      setState(() {
+        todos = value;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +46,18 @@ class _ToDoListPageState extends State<ToDoListPage> {
                       child: TextField(
                         controller: todoController,
                         onSubmitted: onSubmitted,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelStyle: TextStyle(color: Colors.teal),
+                          border: const OutlineInputBorder(),
                           labelText: "Adicione uma tarefa",
                           hintText: "Ex. Estudar Flutter",
+                          errorText: erroText,
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.teal,
+                              width: 2,
+                            )
+                          )
                         ),
                       ),
                     ),
@@ -98,11 +120,19 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
   void addTodo() {
     String text = todoController.text;
-    setState(() {
-      Todo newTodo = Todo(title: text, date: DateTime.now());
-      todos.add(newTodo);
-    });
-    todoController.clear();
+    if(text.isEmpty){
+      setState(() {
+        erroText = "O titulo não pode ser vazio";
+      });
+    }else{
+      setState(() {
+        Todo newTodo = Todo(title: text, date: DateTime.now());
+        todos.add(newTodo);
+        erroText = null;
+      });
+      todoController.clear();
+      repository.saveTodoList(todos);
+    }
   }
 
   // Só e chamada quando aperto enter no teclado
@@ -156,6 +186,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
             ),
           ],
     ));
+    repository.saveTodoList(todos);
   }
 
   void deleteAllTodos(){
@@ -163,6 +194,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
     setState(() {
       todos.clear();
     });
+    repository.saveTodoList(todos);
   }
 
   void onDelete(Todo todo) {
@@ -171,6 +203,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
     setState(() {
       todos.remove(todo);
+      repository.saveTodoList(todos);
     });
 
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -188,6 +221,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
           onPressed: () {
             setState(() {
               todos.insert(todoDeletedPosition!, todoDeleted!);
+              repository.saveTodoList(todos);
             });
           },
         ),
