@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/models/todo.dart';
 import 'package:todo_list/widgets/todo_list_item.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class ToDoListPage extends StatefulWidget {
   ToDoListPage({Key? key}) : super(key: key);
@@ -109,6 +110,30 @@ class _ToDoListPageState extends State<ToDoListPage> {
     addTodo();
   }
 
+  void showScreenLoading(){
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Aguarde..."),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              LoadingAnimationWidget.threeArchedCircle(
+                color: Colors.teal,
+                size: 100,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: (){Navigator.of(context).pop();},
+              child: const Text("OK"),
+              style: TextButton.styleFrom(primary: Colors.teal),
+            ),
+          ],
+        ));
+  }
+
   void showDeleteConfirmationDialog(){
     showDialog(
         context: context,
@@ -123,8 +148,8 @@ class _ToDoListPageState extends State<ToDoListPage> {
             ),
             TextButton(
               onPressed: (){
-                deleteAllTodos();
                 Navigator.of(context).pop();
+                deleteAllTodos();
               },
               child: const Text("Limpar Tudo",),
               style: TextButton.styleFrom(primary: Colors.red),
@@ -134,6 +159,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
   }
 
   void deleteAllTodos(){
+    showScreenLoading();
     setState(() {
       todos.clear();
     });
