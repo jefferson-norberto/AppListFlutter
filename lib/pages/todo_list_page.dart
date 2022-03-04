@@ -10,11 +10,10 @@ class ToDoListPage extends StatefulWidget {
 }
 
 class _ToDoListPageState extends State<ToDoListPage> {
-  int task = 0;
-
   final TextEditingController todoController = TextEditingController();
-
   List<Todo> todos = [];
+  Todo? todoDeleted;
+  int? todoDeletedPosition;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +30,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                     Expanded(
                       child: TextField(
                         controller: todoController,
+                        onSubmitted: onSubmitted,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: "Adicione uma tarefa",
@@ -43,7 +43,10 @@ class _ToDoListPageState extends State<ToDoListPage> {
                     ),
                     ElevatedButton(
                       onPressed: addTodo,
-                      child: const Icon(Icons.add, size: 30,),
+                      child: const Icon(
+                        Icons.add,
+                        size: 30,
+                      ),
                       style: ElevatedButton.styleFrom(
                         primary: Colors.teal,
                         padding: const EdgeInsets.all(15),
@@ -51,25 +54,31 @@ class _ToDoListPageState extends State<ToDoListPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16,),
+                const SizedBox(
+                  height: 16,
+                ),
                 Flexible(
                   child: ListView(
                     shrinkWrap: true,
                     children: [
-                      for(Todo todo in todos)
-                        TodoListItem(todo: todo,),
+                      for (Todo todo in todos)
+                        TodoListItem(todo: todo, onDelete: onDelete),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16,),
+                const SizedBox(
+                  height: 16,
+                ),
                 Row(
                   children: [
                     Expanded(
-                      child: Text("Você tem $task tarefas"),
+                      child: Text("Você tem ${todos.length} tarefas"),
                     ),
-                    const SizedBox(width: 8,),
+                    const SizedBox(
+                      width: 8,
+                    ),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: showDeleteConfirmationDialog,
                       child: const Text("Limpar tudo"),
                       style: ElevatedButton.styleFrom(
                         primary: Colors.teal,
@@ -81,22 +90,82 @@ class _ToDoListPageState extends State<ToDoListPage> {
               ],
             ),
           ),
-
         ),
       ),
     );
   }
 
-  void addTodo(){
+  void addTodo() {
     String text = todoController.text;
     setState(() {
-      Todo newTodo = Todo(
-        title: text,
-        date: DateTime.now()
-      );
+      Todo newTodo = Todo(title: text, date: DateTime.now());
       todos.add(newTodo);
-      task = todos.length;
     });
     todoController.clear();
+  }
+
+  // Só e chamada quando aperto enter no teclado
+  void onSubmitted(String text) {
+    addTodo();
+  }
+
+  void showDeleteConfirmationDialog(){
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Limpar tudo?"),
+          content: const Text("Você tem certeza que deseja apagar tudo?"),
+          actions: [
+            TextButton(
+              onPressed: (){Navigator.of(context).pop();},
+              child: const Text("Cancelar"),
+              style: TextButton.styleFrom(primary: Colors.teal),
+            ),
+            TextButton(
+              onPressed: (){
+                deleteAllTodos();
+                Navigator.of(context).pop();
+              },
+              child: const Text("Limpar Tudo",),
+              style: TextButton.styleFrom(primary: Colors.red),
+            ),
+          ],
+    ));
+  }
+
+  void deleteAllTodos(){
+    setState(() {
+      todos.clear();
+    });
+  }
+
+  void onDelete(Todo todo) {
+    todoDeleted = todo;
+    todoDeletedPosition = todos.indexOf(todo);
+
+    setState(() {
+      todos.remove(todo);
+    });
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Tarefa ${todo.title} foi removida!",
+          style: const TextStyle(color: Colors.teal),
+        ),
+        backgroundColor: Colors.white,
+        duration: const Duration(seconds: 10),
+        action: SnackBarAction(
+          label: 'Desfazer',
+          textColor: Colors.red,
+          onPressed: () {
+            setState(() {
+              todos.insert(todoDeletedPosition!, todoDeleted!);
+            });
+          },
+        ),
+      ),
+    );
   }
 }
